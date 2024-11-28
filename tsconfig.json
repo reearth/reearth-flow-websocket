@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "lib": ["es2022", "dom"],
+    "allowJs": true,
+    "checkJs": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    // "rootDir": "./src",
+    "composite": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "emitDeclarationOnly": true,
+    "moduleResolution": "nodenext",
+    "baseUrl": "./",
+    "paths": {
+      "@reearth/flow-websocket": ["./src/index.js"],
+      "@reearth/flow-websocket/storage/memory": ["./src/storage/memory.js"],
+      "@reearth/flow-websocket/storage/s3": ["./src/storage/s3.js"],
+      "@reearth/flow-websocket/storage/postgres": ["./src/storage/postgres.js"],
+    },
+  },
+  "exclude": ["**/dist", "./demos/blocksuite/"],
+}
