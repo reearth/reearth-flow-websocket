@@ -18,6 +18,11 @@ if (s3Endpoint) {
     // make sure the bucket exists
     await store.client.makeBucket(bucketName);
   } catch (e) {}
+} else if (env.getConf("gcp-project-id")) {
+  console.log("using gcs store");
+  const { createGCSStorage } = await import("../src/storage/gcs.js");
+  const bucketName = "ydocs";
+  store = createGCSStorage(bucketName);
 } else if (postgresUrl) {
   console.log("using postgres store");
   const { createPostgresStorage } = await import("../src/storage/postgres.js");

@@ -6,3 +6,9 @@ tmp
 .env.backup*
 .DS_Store
 .vscode
+package-lock.json
+modules.xml
+reearth-flow-websocket.iml
+vcs.xml
+
+workspace.xml
