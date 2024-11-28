@@ -3,6 +3,7 @@ import * as random from "lib0/random";
 import { Storage } from "@google-cloud/storage";
 import * as env from "lib0/environment";
 import * as logging from "lib0/logging";
+import * as promise from "lib0/promise";
 
 const log = logging.createModuleLogger("@reearth/flow-websocket/gcs");
 
@@ -49,6 +50,21 @@ export const decodeGCSObjectName = (objectName) => {
  * @property {string} GCSStorageConf.projectId
  * @property {string} GCSStorageConf.keyFilename
  */
+
+/**
+ * @param {import('stream').Stream} stream
+ * @return {Promise<Buffer>}
+ */
+const readStream = (stream) =>
+  promise.create((resolve, reject) => {
+    /**
+     * @type {Array<Buffer>}
+     */
+    const chunks = [];
+    stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    stream.on("error", reject);
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
+  });
 
 /**
  * @implements {AbstractStorage}
@@ -103,25 +119,25 @@ export class GCSStorage {
       return null;
     }
 
-    const updates = await Promise.all(
+    let updates = await Promise.all(
       references.map(async (ref) => {
         const [content] = await this.bucket.file(ref).download();
         return content;
       })
     );
 
-    const filteredUpdates = updates.filter((update) => update != null);
+    updates = updates.filter((update) => update != null);
     log(
       "retrieved doc room=" +
         room +
         " docname=" +
         docname +
         " updatesLen=" +
-        filteredUpdates.length
+        updates.length
     );
 
     return {
-      doc: Y.mergeUpdatesV2(filteredUpdates),
+      doc: Y.mergeUpdatesV2(updates),
       references,
     };
   }
