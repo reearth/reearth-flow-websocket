@@ -22,7 +22,6 @@ class YWebsocketServer {
  * @param {number} opts.port
  * @param {import('./storage.js').AbstractStorage} opts.store
  * @param {string} [opts.redisPrefix]
- * @param {string} opts.checkPermCallbackUrl
  * @param {(room:string,docname:string,client:import('./api.js').Api)=>void} [opts.initDocCallback] -
  * this is called when a doc is accessed, but it doesn't exist. You could populate the doc here.
  * However, this function could be called several times, until some content exists. So you need to
@@ -32,10 +31,8 @@ export const createYWebsocketServer = async ({
   redisPrefix = "y",
   port,
   store,
-  checkPermCallbackUrl,
   initDocCallback = () => {},
 }) => {
-  checkPermCallbackUrl += checkPermCallbackUrl.slice(-1) !== "/" ? "/" : "";
   const app = uws.App({});
   await registerYWebsocketServer(
     app,

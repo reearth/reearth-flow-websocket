@@ -1,43 +1,97 @@
 #!/usr/bin/env node
 
-import * as number from "lib0/number";
-import * as env from "lib0/environment";
 import * as yredis from "@reearth/flow-websocket";
+import * as dotenv from 'dotenv';
 
-const port = number.parseInt(env.getConf("port") || "8001");
-const redisPrefix = env.getConf("redis-prefix") || "y";
-const postgresUrl = env.getConf("postgres");
-const s3Endpoint = env.getConf("s3-endpoint");
-const checkPermCallbackUrl = env.ensureConf("AUTH_PERM_CALLBACK");
+// Load environment variables
+dotenv.config();
 
-let store;
-if (s3Endpoint) {
-  console.log("using s3 store");
+const CONFIG = {
+  port: parseInt(process.env.PORT || "8081"),
+  redisPrefix: process.env.REDIS_PREFIX || "y",
+  postgresUrl: process.env.POSTGRES_URL,
+  s3: {
+    endpoint: process.env.S3_ENDPOINT,
+    bucketName: process.env.S3_BUCKET_NAME || "ydocs"
+  },
+  gcs: {
+    bucketName: process.env.GCS_BUCKET_NAME || "ydocs"
+  }
+};
+
+async function initializeS3Storage() {
+  console.log("Initializing S3 storage");
   const { createS3Storage } = await import("../src/storage/s3.js");
-  const bucketName = "ydocs";
-  store = createS3Storage(bucketName);
+  const store = createS3Storage(CONFIG.s3.bucketName);
+  
   try {
-    // make sure the bucket exists
-    await store.client.makeBucket(bucketName);
-  } catch (e) {}
-} else if (env.getConf("gcp-project-id")) {
-  console.log("using gcs store");
-  const { createGCSStorage } = await import("../src/storage/gcs.js");
-  const bucketName = "ydocs";
-  store = createGCSStorage(bucketName);
-} else if (postgresUrl) {
-  console.log("using postgres store");
-  const { createPostgresStorage } = await import("../src/storage/postgres.js");
-  store = await createPostgresStorage();
-} else {
-  console.log("ATTENTION! using in-memory store");
-  const { createMemoryStorage } = await import("../src/storage/memory.js");
-  store = createMemoryStorage();
+    await store.client.makeBucket(CONFIG.s3.bucketName);
+    console.log(`Ensured S3 bucket ${CONFIG.s3.bucketName} exists`);
+  } catch (error) {
+    // Bucket might already exist, which is fine
+    if (error instanceof Error) {
+      console.log(`Note: ${error.message}`);
+    } else {
+      console.log(`Note: ${String(error)}`);
+    }
+  }
+  
+  return store;
 }
 
-yredis.createYWebsocketServer({
-  port,
-  store,
-  checkPermCallbackUrl,
-  redisPrefix,
-});
+async function initializeGCSStorage() {
+  console.log("Initializing GCS storage");
+  const { createGCSStorage } = await import("../src/storage/gcs.js");
+  return createGCSStorage(CONFIG.gcs.bucketName);
+}
+
+async function initializePostgresStorage() {
+  console.log("Initializing Postgres storage");
+  const { createPostgresStorage } = await import("../src/storage/postgres.js");
+  return createPostgresStorage();
+}
+
+async function initializeMemoryStorage() {
+  console.log("ATTENTION! Initializing in-memory storage (not recommended for production)");
+  const { createMemoryStorage } = await import("../src/storage/memory.js");
+  return createMemoryStorage();
+}
+
+async function determineStorage() {
+  if (CONFIG.s3.endpoint) {
+    return await initializeS3Storage();
+  }
+  
+  if (CONFIG.gcs.bucketName) {
+    return await initializeGCSStorage();
+  }
+  
+  if (CONFIG.postgresUrl) {
+    return await initializePostgresStorage();
+  }
+  
+  return await initializeMemoryStorage();
+}
+
+async function startServer() {
+  try {
+    const store = await determineStorage();
+
+    console.log("Starting server...");
+    console.log("Configuration: ", CONFIG);
+    
+    yredis.createYWebsocketServer({
+      port: CONFIG.port,
+      store,
+      redisPrefix: CONFIG.redisPrefix,
+    });
+
+    console.log(`Server started on port ${CONFIG.port}`);
+    console.log(`Redis prefix: ${CONFIG.redisPrefix}`);
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();

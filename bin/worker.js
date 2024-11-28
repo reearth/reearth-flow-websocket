@@ -4,9 +4,12 @@ import * as env from "lib0/environment";
 import * as yredis from "@reearth/flow-websocket";
 import * as Y from "yjs";
 
-const redisPrefix = env.getConf("redis-prefix") || "y";
-const postgresUrl = env.getConf("postgres");
-const s3Endpoint = env.getConf("s3-endpoint");
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const redisPrefix = process.env.REDIS_PREFIX || "y";
+const postgresUrl = process.env.POSTGRES_URL;
+const s3Endpoint = process.env.S3_ENDPOINT;
 
 let store;
 if (s3Endpoint) {

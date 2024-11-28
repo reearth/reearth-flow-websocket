@@ -12,13 +12,17 @@ import * as protocol from "./protocol.js";
 import * as env from "lib0/environment";
 import * as logging from "lib0/logging";
 
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 const logWorker = logging.createModuleLogger(
   "@reearth/flow-websocket/api/worker"
 );
 const logApi = logging.createModuleLogger("@reearth/flow-websocket/api");
 
-export const redisUrl = env.ensureConf("redis");
+export const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
+console.log("REDIS_URL", redisUrl);
 /**
  * @param {string} a
  * @param {string} b

@@ -37,7 +37,7 @@ const createWorker = async () => {
 }
 
 const createServer = async () => {
-  const server = await createYWebsocketServer({ port: utils.yredisPort, store: utils.store, redisPrefix: utils.redisPrefix, checkPermCallbackUrl: utils.checkPermCallbackUrl })
+  const server = await createYWebsocketServer({ port: utils.yredisPort, store: utils.store, redisPrefix: utils.redisPrefix })
   utils.prevClients.push(server)
   return server
 }

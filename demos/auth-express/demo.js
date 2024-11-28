@@ -33,7 +33,7 @@ const authToken = await fetch(`http://${location.host}/auth/token`).then(
 );
 
 const ydoc = new Y.Doc();
-const provider = new WebsocketProvider("ws://localhost:8001", room, ydoc, {
+const provider = new WebsocketProvider("ws://localhost:8081", room, ydoc, {
   params: { yauth: authToken },
 });
 

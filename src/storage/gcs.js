@@ -15,12 +15,15 @@ const log = logging.createModuleLogger("@reearth/flow-websocket/gcs");
  * @param {string} bucketName
  */
 export const createGCSStorage = (bucketName) => {
-  const projectId = env.ensureConf("gcp-project-id");
-  const keyFilename = env.ensureConf("gcp-key-filename");
-  return new GCSStorage(bucketName, {
-    projectId,
-    keyFilename,
-  });
+  if (process.env.NODE_ENV === 'test') {
+    return new GCSStorage(bucketName, {
+      apiEndpoint: process.env.STORAGE_EMULATOR_HOST || 'http://localhost:4443',
+      projectId: 'test-project',
+      credentials: { client_email: 'test@test.com', private_key: 'test' },
+      useHttps: false 
+    });
+  }
+  return new GCSStorage(bucketName);
 };
 
 /**
@@ -46,25 +49,16 @@ export const decodeGCSObjectName = (objectName) => {
 };
 
 /**
- * @typedef {Object} GCSStorageConf
- * @property {string} GCSStorageConf.projectId
- * @property {string} GCSStorageConf.keyFilename
- */
-
-/**
  * @implements {AbstractStorage}
  */
 export class GCSStorage {
   /**
    * @param {string} bucketName
-   * @param {GCSStorageConf} conf
+   * @param {Object} [options={}]
    */
-  constructor(bucketName, { projectId, keyFilename }) {
+  constructor(bucketName, options = {}) {
     this.bucketName = bucketName;
-    this.storage = new Storage({
-      projectId,
-      keyFilename,
-    });
+    this.storage = new Storage(options);
     this.bucket = this.storage.bucket(bucketName);
   }
 

@@ -2,7 +2,7 @@ services:
   server:
     build: .
     ports:
-      - "8001:8001"
+      - "8081:8081"
     command: node ./bin/server.js --no-colors
     env_file: .env
     depends_on:

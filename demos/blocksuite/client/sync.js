@@ -5,7 +5,7 @@ import { authToken } from "./api.js";
 import { getCurrentRoom } from "./route.js";
 import { editor } from "./editor.js";
 
-const endpoint = "ws://localhost:8001";
+const endpoint = "ws://localhost:8081";
 
 /** @type {WebsocketProvider | null} */
 let currentProvider = null;
