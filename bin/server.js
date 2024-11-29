@@ -81,6 +81,7 @@ async function startServer() {
 
     console.log("Starting server...");
     console.log("Configuration: ", CONFIG);
+    console.log("Storage: ", store);
 
     yredis.createYWebsocketServer({
       port: CONFIG.port,
