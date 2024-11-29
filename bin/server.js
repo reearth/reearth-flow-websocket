@@ -12,20 +12,20 @@ const CONFIG = {
   postgresUrl: process.env.POSTGRES_URL,
   s3: {
     endpoint: process.env.S3_ENDPOINT,
-    bucketName: process.env.S3_BUCKET_NAME || "ydocs",
+    bucketName: process.env.S3_BUCKET_NAME,
   },
   gcs: {
-    bucketName: process.env.GCS_BUCKET_NAME || "ydocs",
+    bucketName: process.env.GCS_BUCKET_NAME,
   },
 };
 
 async function initializeS3Storage() {
   console.log("Initializing S3 storage");
   const { createS3Storage } = await import("../src/storage/s3.js");
-  const store = createS3Storage(CONFIG.s3.bucketName);
+  const store = createS3Storage(CONFIG.s3.bucketName || "ydocs");
 
   try {
-    await store.client.makeBucket(CONFIG.s3.bucketName);
+    await store.client.makeBucket(CONFIG.s3.bucketName || "ydocs");
     console.log(`Ensured S3 bucket ${CONFIG.s3.bucketName} exists`);
   } catch (error) {
     // Bucket might already exist, which is fine
@@ -42,7 +42,7 @@ async function initializeS3Storage() {
 async function initializeGCSStorage() {
   console.log("Initializing GCS storage");
   const { createGCSStorage } = await import("../src/storage/gcs.js");
-  return createGCSStorage(CONFIG.gcs.bucketName);
+  return createGCSStorage(CONFIG.gcs.bucketName || "ydocs");
 }
 
 async function initializePostgresStorage() {
@@ -80,8 +80,6 @@ async function startServer() {
     const store = await determineStorage();
 
     console.log("Starting server...");
-    console.log("Configuration: ", CONFIG);
-    console.log("Storage: ", store);
 
     yredis.createYWebsocketServer({
       port: CONFIG.port,
