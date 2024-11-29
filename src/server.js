@@ -40,8 +40,11 @@ export const createYWebsocketServer = async ({
     store,
     async (req) => {
       const room = req.getParameter(0);
+      const headerWsProtocol = req.getHeader('sec-websocket-protocol');
+      const [, , user_id] = /(^|,)user_id-(((?!,).)*)/.exec(headerWsProtocol) ?? [null, null, req.getQuery('user_id') || "test_user"];
+
       try {
-        return { hasWriteAccess: true, room, userid: "user1" };
+        return { hasWriteAccess: true, room, userid: user_id };
       } catch (e) {
         console.error("Failed to pull permissions from");
         throw e;
