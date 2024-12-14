@@ -37,7 +37,7 @@ export const createGCSStorage = (bucketName) => {
 export const encodeGCSObjectName = (room, docid, r = random.uuidv4()) => {
   console.log(`Encoding GCS object name for room=${room}, docid=${docid}, random=${r}`);
   log(`Encoding GCS object name for room: ${room}, docid: ${docid}, random: ${r}`);
-  return `${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
+  return `projects/${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
 };
 
 /**
@@ -46,7 +46,7 @@ export const encodeGCSObjectName = (room, docid, r = random.uuidv4()) => {
 export const decodeGCSObjectName = (objectName) => {
   console.log("Decoding GCS object name:", objectName);
   log("Decoding GCS object name: " + objectName);
-  const match = objectName.match(/(.*)\/(.*)\/(.*)$/);
+  const match = objectName.match(/projects\/(.*)\/(.*)\/(.*)$/);
   if (match == null) {
     console.error("Malformed GCS object name:", objectName);
     throw new Error("Malformed y:room stream name!");
