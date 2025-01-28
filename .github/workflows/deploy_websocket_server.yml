@@ -21,7 +21,6 @@ on:
 jobs:
   build-docker-image:
     name: Build and Push Docker Image
-    needs: build-websocket
     runs-on: ubuntu-latest
     if: ${{ inputs.name != 'blank' || inputs.new_tag != 'blank' }}
     env:
