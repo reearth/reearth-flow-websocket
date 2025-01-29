@@ -1,26 +1,36 @@
 name: Build and Deploy Websocket
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
-      sha_short:
-        required: true
-        type: string
-      new_tag:
-        required: true
-        type: string
-      new_tag_short:
-        required: true
-        type: string
       name:
+        description: 'Build name (e.g., nightly)'
         required: true
-        type: string
-      sha:
+        default: 'nightly'
+      new_tag:
+        description: 'Tag version'
         required: true
-        type: string
+        default: 'blank'
+      new_tag_short:
+        description: 'Short tag version'
+        required: true
+        default: 'blank'
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      sha_short: ${{ steps.vars.outputs.sha_short }}
+      sha: ${{ github.sha }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set variables
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
   build-websocket:
     name: Build Websocket
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -46,9 +56,9 @@ jobs:
 
   build-docker-image:
     name: Build and Push Docker Image
-    needs: build-websocket
+    needs: [setup, build-websocket]
     runs-on: ubuntu-latest
-    if: ${{ inputs.name != 'blank' || inputs.new_tag != 'blank' }}
+    if: ${{ github.event.inputs.name != 'blank' || github.event.inputs.new_tag != 'blank' }}
     env:
       IMAGE_NAME: reearth/reearth-flow-websocket
       IMAGE_GCP: us-central1-docker.pkg.dev/reearth-oss/reearth/reearth-flow-websocket
@@ -82,9 +92,9 @@ jobs:
       - name: Determine Build Options
         id: options
         run: |
-          TAG="${{ inputs.new_tag_short != 'blank' && inputs.new_tag_short || '' }}"
-          NAME="${{ inputs.name }}"
-          SHA="${{ inputs.sha_short }}"
+          TAG="${{ github.event.inputs.new_tag_short != 'blank' && github.event.inputs.new_tag_short || '' }}"
+          NAME="${{ github.event.inputs.name }}"
+          SHA="${{ needs.setup.outputs.sha_short }}"
 
           if [[ -n "$TAG" ]]; then
             PLATFORMS="linux/amd64"
@@ -120,17 +130,17 @@ jobs:
         run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
       - name: Push Docker Image to GCP Artifact Registry
-        if: ${{ inputs.name == 'nightly' }}
+        if: ${{ github.event.inputs.name == 'nightly' }}
         run: |
-          docker pull $IMAGE_NAME:${{ inputs.name }}
-          docker tag $IMAGE_NAME:${{ inputs.name }} $IMAGE_GCP:${{ inputs.name }}
-          docker push $IMAGE_GCP:${{ inputs.name }}
+          docker pull $IMAGE_NAME:${{ github.event.inputs.name }}
+          docker tag $IMAGE_NAME:${{ github.event.inputs.name }} $IMAGE_GCP:${{ github.event.inputs.name }}
+          docker push $IMAGE_GCP:${{ github.event.inputs.name }}
 
   deploy-to-cloud-run:
     name: Deploy to Cloud Run (Nightly)
-    needs: build-docker-image
+    needs: [setup, build-docker-image]
     runs-on: ubuntu-latest
-    if: ${{ inputs.name == 'nightly' }}
+    if: ${{ github.event.inputs.name == 'nightly' }}
     env:
       IMAGE: us-central1-docker.pkg.dev/reearth-oss/reearth/reearth-flow-websocket:nightly
       GCP_REGION: us-central1
