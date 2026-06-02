@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: reearth-flow-websocket
+  namespace: reearth
+  description: fork y-redis for reearth-flow
+  annotations:
+    github.com/project-slug: reearth/reearth-flow-websocket
+  links:
+  - url: https://github.com/reearth/reearth-flow-websocket
+    title: GitHub
+    icon: github
+  tags:
+  - javascript
+spec:
+  type: service
+  lifecycle: production
+  owner: reearth/cto-office
